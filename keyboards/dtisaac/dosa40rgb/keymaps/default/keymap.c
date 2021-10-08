@@ -67,3 +67,49 @@ void rgb_matrix_indicators_user(void)
 		rgb_matrix_set_color(22, 200, 0, 200);
 	}
 }
+
+void sdep_send(const uint8_t *cmd, uint8_t len) {
+	
+    spi_start(ADAFRUIT_BLE_CS_PIN, false, 0, 2);
+    uint8_t cnt = 200;
+    bool     ready      = false;
+
+    do {
+        ready = spi_write(0x10) != 0xFE;
+        if (ready) {
+            break;
+        }
+        spi_stop();
+        wait_us(25);
+        spi_start(ADAFRUIT_BLE_CS_PIN, false, 0, 2);
+    } while (cnt--);
+
+    if (ready) {
+		spi_write(0x00);
+		spi_write(0x0A);
+		spi_write(len);
+        spi_transmit(cmd, len);
+    }
+
+    spi_stop();
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+	
+    switch (keycode) {
+        case LED_EN:
+            if (record->event.pressed) {
+				DDRB = DDRB ^ 0x20;
+				PORTB &= ~(1 << 5);
+            }
+            return false;
+		case BLE_DIS:
+            if (record->event.pressed) {
+				sdep_send(cm1,sizeof(cm1));
+				sdep_send(cm2,sizeof(cm2));
+				sdep_send(cm3,sizeof(cm3));
+            }
+            return false;
+    }
+    return true;
+}
