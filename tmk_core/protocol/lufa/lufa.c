@@ -1100,22 +1100,23 @@ void protocol_post_init(void) { host_set_driver(&lufa_driver); }
 
 void protocol_pre_task(void) {
 #if !defined(NO_USB_STARTUP_CHECK)
-    if (USB_DeviceState == DEVICE_STATE_Suspended) {
-        print("[s]");
-        while (USB_DeviceState == DEVICE_STATE_Suspended) {
-            suspend_power_down();
-            if (USB_Device_RemoteWakeupEnabled && suspend_wakeup_condition()) {
-                USB_Device_SendRemoteWakeup();
-                clear_keyboard();
+        if (USB_DeviceState == DEVICE_STATE_Suspended) {
+            print("[s]");
+            if (USB_DeviceState == DEVICE_STATE_Suspended) {
+                suspend_power_down();
+                if (USB_Device_RemoteWakeupEnabled && suspend_wakeup_condition()) {
+                    USB_Device_SendRemoteWakeup();
+                    clear_keyboard();
 
 #    if USB_SUSPEND_WAKEUP_DELAY > 0
-                // Some hubs, kvm switches, and monitors do
-                // weird things, with USB device state bouncing
-                // around wildly on wakeup, yielding race
-                // conditions that can corrupt the keyboard state.
-                //
-                // Pause for a while to let things settle...
-                wait_ms(USB_SUSPEND_WAKEUP_DELAY);
+                    // Some hubs, kvm switches, and monitors do
+                    // weird things, with USB device state bouncing
+                    // around wildly on wakeup, yielding race
+                    // conditions that can corrupt the keyboard state.
+                    //
+                    // Pause for a while to let things settle...
+                    wait_ms(USB_SUSPEND_WAKEUP_DELAY);
+                    clear_keyboard();
 #    endif
             }
         }
